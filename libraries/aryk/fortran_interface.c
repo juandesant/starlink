@@ -1,0 +1,869 @@
+#include "f77.h"                 /* FORTRAN <-> C interface macros (SUN/209) */
+#include "aryk.h"
+#include "star/hds_fortran.h"
+
+/* Define a union which allows a bit pattern to be accessed as a
+   signed or unsigned int, or as a pointer. */
+typedef union IdUnion {
+   int i;
+   unsigned u;
+   void *pointer;
+} IdUnion;
+
+
+IdUnion work1;
+IdUnion work2;
+IdUnion work3;
+
+#define ARYK__NOID 0
+#define aryI2A(iary) (((iary)!=ARYK__NOID)?(work1.i=(iary),work1.pointer):NULL)
+#define aryI2A2(iary) (((iary)!=ARYK__NOID)?(work2.i=(iary),work2.pointer):NULL)
+#define aryA2I(ary) (ary?(work3.pointer=(ary),work3.i):ARYK__NOID)
+
+IdUnion work4;
+IdUnion work5;
+
+#define ARYK__NOPL 0
+#define aryP2I(place) (place?(work4.pointer=(place),work4.i):ARYK__NOPL)
+#define aryI2P(iplace) (((iplace)!=ARYK__NOPL)?(work5.i=(iplace),work5.pointer):NULL)
+
+
+
+
+
+
+
+
+
+
+F77_SUBROUTINE(aryk_annul)( INTEGER(IARY),
+                           INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(STATUS)
+
+   Ary *ary = aryI2A(*IARY);
+   arykAnnul( &ary, STATUS );
+   *IARY = aryA2I(ary);
+}
+
+F77_SUBROUTINE(aryk_bad)( INTEGER(IARY),
+                         LOGICAL(CHECK),
+                         LOGICAL(BAD),
+                         INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_LOGICAL(CHECK)
+   GENPTR_LOGICAL(BAD)
+   GENPTR_INTEGER(STATUS)
+   int bad;
+   arykBad( aryI2A(*IARY), F77_ISTRUE(*CHECK)?1:0, &bad, STATUS );
+   *BAD = bad ? F77_TRUE : F77_FALSE;
+}
+
+F77_SUBROUTINE(aryk_base)( INTEGER(IARY1),
+                          INTEGER(IARY2),
+                          INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY1)
+   GENPTR_INTEGER(IARY2)
+   GENPTR_INTEGER(STATUS)
+   Ary *ary2;
+   arykBase( aryI2A(*IARY1), &ary2, STATUS );
+   *IARY2 = aryA2I(ary2);
+}
+
+F77_SUBROUTINE(aryk_bound)( INTEGER(IARY),
+                           INTEGER(NDIMX),
+                           INTEGER8_ARRAY(LBND),
+                           INTEGER8_ARRAY(UBND),
+                           INTEGER(NDIM),
+                          INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY1)
+   GENPTR_INTEGER(NDIMX)
+   GENPTR_INTEGER8_ARRAY(LBND)
+   GENPTR_INTEGER8_ARRAY(UBND)
+   GENPTR_INTEGER(NDIM)
+   GENPTR_INTEGER(STATUS)
+
+   int i, n;
+   hdsdim lbnd[ARYK__MXDIM];
+   hdsdim ubnd[ARYK__MXDIM];
+   arykBound( aryI2A(*IARY), ARYK__MXDIM, lbnd, ubnd, NDIM, STATUS );
+
+   n = ( *NDIMX < ARYK__MXDIM ) ? *NDIMX : ARYK__MXDIM;
+   for( i = 0; i < n; i++ ) {
+      LBND[ i ] = lbnd[ i ];
+      UBND[ i ] = ubnd[ i ];
+   }
+
+   for( ; i < *NDIMX; i++ ) {
+      LBND[ i ] = 1;
+      UBND[ i ] = 1;
+   }
+}
+
+F77_SUBROUTINE(aryk_clone)( INTEGER(IARY1),
+                          INTEGER(IARY2),
+                          INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY1)
+   GENPTR_INTEGER(IARY2)
+   GENPTR_INTEGER(STATUS)
+   Ary *ary2;
+   arykClone( aryI2A(*IARY1), &ary2, STATUS );
+   *IARY2 = aryA2I(ary2);
+}
+
+F77_SUBROUTINE(aryk_cmplx)( INTEGER(IARY),
+                           LOGICAL(CMPLX),
+                           INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_LOGICAL(CMPLX)
+   GENPTR_INTEGER(STATUS)
+   int cmplx;
+   arykCmplx( aryI2A(*IARY), &cmplx, STATUS );
+   *CMPLX = cmplx ? F77_TRUE : F77_FALSE;
+}
+
+
+F77_SUBROUTINE(aryk_copy)( INTEGER(IARY1),
+                          INTEGER(PLACE),
+                          INTEGER(IARY2),
+                          INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY1)
+   GENPTR_INTEGER(PLACE)
+   GENPTR_INTEGER(IARY2)
+   GENPTR_INTEGER(STATUS)
+   Ary *ary2;
+   AryPlace *place = aryI2P(*PLACE);
+   arykCopy( aryI2A(*IARY1), &place, &ary2, STATUS );
+   *PLACE = aryP2I(place);
+   *IARY2 = aryA2I(ary2);
+}
+
+F77_SUBROUTINE(aryk_find)( CHARACTER(LOC),
+                          CHARACTER(NAME),
+                          INTEGER(IARY),
+                          INTEGER(STATUS)
+                          TRAIL(LOC)
+                          TRAIL(NAME) ) {
+   GENPTR_CHARACTER(LOC)
+   GENPTR_CHARACTER(NAME)
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(STATUS)
+
+   Ary *ary;
+   char name[DAT__SZNAM+1];
+   HDSLoc *loc = NULL;
+
+   datImportFloc( LOC, LOC_length, &loc, STATUS );
+   cnfImpn( NAME, NAME_length, DAT__SZNAM, name );
+
+   arykFind( loc, name, &ary, STATUS );
+
+   *IARY = aryA2I(ary);
+}
+
+F77_SUBROUTINE(aryk_ftype)( INTEGER(IARY),
+                           CHARACTER(FTYPE),
+                           INTEGER(STATUS)
+                           TRAIL(FTYPE) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_CHARACTER(FTYPE)
+   GENPTR_INTEGER(STATUS)
+   char ftype[ARYK__SZFTP+1];
+
+   arykFtype( aryI2A(*IARY), ftype, STATUS );
+   cnfExprt( ftype, FTYPE, FTYPE_length );
+
+}
+
+F77_SUBROUTINE(aryk_imprt)( CHARACTER(LOC),
+                          INTEGER(IARY),
+                          INTEGER(STATUS)
+                          TRAIL(LOC) ) {
+   GENPTR_CHARACTER(LOC)
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(STATUS)
+
+   Ary *ary;
+   HDSLoc *loc = NULL;
+
+   datImportFloc( LOC, LOC_length, &loc, STATUS );
+
+   arykImprt( loc, &ary, STATUS );
+
+   *IARY = aryA2I(ary);
+}
+
+F77_SUBROUTINE(aryk_loc)( INTEGER(IARY),
+                         CHARACTER(LOC),
+                         INTEGER(STATUS)
+                         TRAIL(LOC) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_CHARACTER(LOC)
+   GENPTR_INTEGER(STATUS)
+
+   HDSLoc *loc = NULL;
+
+   arykLoc( aryI2A(*IARY), &loc, STATUS );
+   datExportFloc( &loc, 1, LOC_length, LOC, STATUS );
+
+}
+
+F77_SUBROUTINE(aryk_msg)( CHARACTER(TOKEN),
+                         INTEGER(IARY)
+                         TRAIL(TOKEN) ) {
+   GENPTR_CHARACTER(TOKEN)
+   GENPTR_INTEGER(IARY)
+   char *token = cnfCreim( TOKEN, TOKEN_length );
+
+   arykMsg( token, aryI2A(*IARY) );
+
+   cnfFree( token );
+}
+
+F77_SUBROUTINE(aryk_same)( INTEGER(IARY1),
+                          INTEGER(IARY2),
+                          LOGICAL(SAME),
+                          LOGICAL(ISECT),
+                          INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY1)
+   GENPTR_INTEGER(IARY2)
+   GENPTR_LOGICAL(SAME)
+   GENPTR_LOGICAL(ISECT)
+   GENPTR_INTEGER(STATUS)
+
+   int same, isect;
+
+   arykSame( aryI2A(*IARY1), aryI2A2(*IARY2), &same, &isect, STATUS );
+
+   F77_EXPORT_LOGICAL( same, *SAME );
+   F77_EXPORT_LOGICAL( isect, *ISECT );
+}
+
+F77_SUBROUTINE(aryk_delet)( INTEGER(IARY),
+                           INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(STATUS)
+
+   Ary *ary = aryI2A(*IARY);
+
+   arykDelet( &ary, STATUS );
+
+   *IARY = aryA2I(ary);
+}
+
+
+
+F77_SUBROUTINE(aryk_delta)( INTEGER(IARY1),
+                           INTEGER(ZAXIS),
+                           CHARACTER(TYPE),
+                           REAL(MINRAT),
+                           INTEGER(PLACE),
+                           REAL(ZRATIO),
+                          INTEGER(IARY2),
+                          INTEGER(STATUS)
+                          TRAIL(TYPE) ) {
+   GENPTR_INTEGER(IARY1)
+   GENPTR_INTEGER(ZAXIS)
+   GENPTR_CHARACTER(TYPE)
+   GENPTR_REAL(MINRAT)
+   GENPTR_INTEGER(PLACE)
+   GENPTR_REAL(ZRATIO)
+   GENPTR_INTEGER(IARY2)
+   GENPTR_INTEGER(STATUS)
+
+   char type[ ARYK__SZTYP + 1 ];
+   cnfImpn( TYPE, TYPE_length, ARYK__SZTYP, type );
+   Ary *ary2;
+   AryPlace *place = aryI2P(*PLACE);
+
+   arykDelta( aryI2A(*IARY1), *ZAXIS, type, *MINRAT, &place, ZRATIO,
+             &ary2, STATUS );
+
+   *PLACE = aryP2I(place);
+   *IARY2 = aryA2I(ary2);
+}
+
+F77_SUBROUTINE(aryk_dim)( INTEGER(IARY),
+                         INTEGER(NDIMX),
+                         INTEGER8_ARRAY(DIM),
+                         INTEGER(NDIM),
+                         INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(NDIMX)
+   GENPTR_INTEGER8_ARRAY(DIM)
+   GENPTR_INTEGER(NDIM)
+   GENPTR_INTEGER(STATUS)
+
+   int i, n;
+   hdsdim dim[ ARYK__MXDIM ];
+
+   arykDim( aryI2A(*IARY), ARYK__MXDIM, dim, NDIM, STATUS );
+
+   n = ( *NDIMX < ARYK__MXDIM ) ? *NDIMX : ARYK__MXDIM;
+   for( i = 0; i < n; i++ ) DIM[ i ] = dim[ i ];
+   for( ; i < *NDIMX; i++ ) DIM[ i ] = 1;
+}
+
+F77_SUBROUTINE(aryk_dupe)( INTEGER(IARY1),
+                          INTEGER(PLACE),
+                          INTEGER(IARY2),
+                          INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY1)
+   GENPTR_INTEGER(PLACE)
+   GENPTR_INTEGER(IARY2)
+   GENPTR_INTEGER(STATUS)
+   Ary *ary2;
+   AryPlace *place = aryI2P(*PLACE);
+
+   arykDupe( aryI2A(*IARY1), &place, &ary2, STATUS );
+
+   *PLACE = aryP2I(place);
+   *IARY2 = aryA2I(ary2);
+}
+
+F77_SUBROUTINE(aryk_form)( INTEGER(IARY),
+                          CHARACTER(FORM),
+                          INTEGER(STATUS)
+                          TRAIL(FORM) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_CHARACTER(FORM)
+   GENPTR_INTEGER(STATUS)
+   char form[ARYK__SZFRM+1];
+
+   arykForm( aryI2A(*IARY), form, STATUS );
+
+   cnfExprt( form, FORM, FORM_length );
+}
+
+F77_SUBROUTINE(aryk_gtdlt)( INTEGER(IARY),
+                           INTEGER(ZAXIS),
+                           CHARACTER(ZTYPE),
+                           REAL(ZRATIO),
+                           INTEGER(STATUS)
+                           TRAIL(ZTYPE) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(ZAXIS)
+   GENPTR_CHARACTER(ZTYPE)
+   GENPTR_REAL(ZRATIO)
+   GENPTR_INTEGER(STATUS)
+   char ztype[DAT__SZTYP+1];
+
+   arykGtdlt( aryI2A(*IARY), ZAXIS, ztype, ZRATIO, STATUS );
+
+   cnfExprt( ztype, ZTYPE, ZTYPE_length );
+}
+
+F77_SUBROUTINE(aryk_isacc)( INTEGER(IARY),
+                           CHARACTER(ACCESS),
+                           LOGICAL(ISACC),
+                           INTEGER(STATUS)
+                           TRAIL(ACCESS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_CHARACTER(ACCESS)
+   GENPTR_LOGICAL(ISACC)
+   GENPTR_INTEGER(STATUS)
+   int isacc;
+
+   char access[ ARYK__SZACC + 1 ];
+   cnfImpn( ACCESS, ACCESS_length, ARYK__SZACC, access );
+
+   arykIsacc( aryI2A(*IARY), access, &isacc, STATUS );
+   *ISACC = isacc ? F77_TRUE : F77_FALSE;
+
+}
+
+F77_SUBROUTINE(aryk_isbas)( INTEGER(IARY),
+                           LOGICAL(BASE),
+                           INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_LOGICAL(BASE)
+   GENPTR_INTEGER(STATUS)
+   int base;
+
+   arykIsbas( aryI2A(*IARY), &base, STATUS );
+   *BASE = base ? F77_TRUE : F77_FALSE;
+}
+
+F77_SUBROUTINE(aryk_ismap)( INTEGER(IARY),
+                           LOGICAL(MAPPED),
+                           INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_LOGICAL(MAPPED)
+   GENPTR_INTEGER(STATUS)
+   int mapped;
+
+   arykIsmap( aryI2A(*IARY), &mapped, STATUS );
+   *MAPPED = mapped ? F77_TRUE : F77_FALSE;
+}
+
+F77_SUBROUTINE(aryk_istmp)( INTEGER(IARY),
+                           LOGICAL(TEMP),
+                           INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_LOGICAL(TEMP)
+   GENPTR_INTEGER(STATUS)
+   int temp;
+
+   arykIstmp( aryI2A(*IARY), &temp, STATUS );
+   *TEMP = temp ? F77_TRUE : F77_FALSE;
+}
+
+F77_SUBROUTINE(aryk_map)( INTEGER(IARY),
+                         CHARACTER(TYPE),
+                         CHARACTER(MMOD),
+                         INTEGER(PNTR),
+                         INTEGER8(EL),
+                         INTEGER(STATUS)
+                         TRAIL(TYPE)
+                         TRAIL(MMOD) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_CHARACTER(TYPE)
+   GENPTR_CHARACTER(MMOD)
+   GENPTR_INTEGER(PNTR)
+   GENPTR_INTEGER8(EL)
+   GENPTR_INTEGER(STATUS)
+   char type[ ARYK__SZTYP + 1 ];
+   char mmod[ ARYK__SZMMD + 1 ];
+   void *pntr = NULL;
+   size_t el;
+
+   cnfImpn( TYPE, TYPE_length, ARYK__SZTYP, type );
+   cnfImpn( MMOD, MMOD_length, ARYK__SZMMD, mmod );
+
+   arykMap( aryI2A(*IARY), type, mmod, &pntr, &el, STATUS );
+
+   *PNTR = cnfFptr( pntr );
+   *EL = el;
+}
+
+F77_SUBROUTINE(aryk_mapz)( INTEGER(IARY),
+                         CHARACTER(TYPE),
+                         CHARACTER(MMOD),
+                         INTEGER(RPNTR),
+                         INTEGER(IPNTR),
+                         INTEGER8(EL),
+                         INTEGER(STATUS)
+                         TRAIL(TYPE)
+                         TRAIL(MMOD) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_CHARACTER(TYPE)
+   GENPTR_CHARACTER(MMOD)
+   GENPTR_INTEGER(RPNTR)
+   GENPTR_INTEGER(IPNTR)
+   GENPTR_INTEGER8(EL)
+   GENPTR_INTEGER(STATUS)
+   char type[ ARYK__SZTYP + 1 ];
+   char mmod[ ARYK__SZMMD + 1 ];
+   void *rpntr = NULL;
+   void *ipntr = NULL;
+   size_t el;
+
+   cnfImpn( TYPE, TYPE_length, ARYK__SZTYP, type );
+   cnfImpn( MMOD, MMOD_length, ARYK__SZMMD, mmod );
+
+   arykMapz( aryI2A(*IARY), type, mmod, &rpntr, &ipntr, &el, STATUS );
+
+   *RPNTR = cnfFptr( rpntr );
+   *IPNTR = cnfFptr( ipntr );
+   *EL = el;
+}
+
+F77_SUBROUTINE(aryk_ndim)( INTEGER(IARY),
+                          INTEGER(NDIM),
+                          INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(NDIM)
+   GENPTR_INTEGER(STATUS)
+
+   arykNdim( aryI2A(*IARY), NDIM, STATUS );
+
+}
+
+F77_SUBROUTINE(aryk_new)( CHARACTER(FTYPE),
+                         INTEGER(NDIM),
+                         INTEGER8_ARRAY(LBND),
+                         INTEGER8_ARRAY(UBND),
+                         INTEGER(PLACE),
+                         INTEGER(IARY),
+                         INTEGER(STATUS)
+                         TRAIL(FTYPE) ) {
+   GENPTR_CHARACTER(FTYPE)
+   GENPTR_INTEGER(NDIM)
+   GENPTR_INTEGER8_ARRAY(LBND)
+   GENPTR_INTEGER8_ARRAY(UBND)
+   GENPTR_INTEGER(PLACE)
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(STATUS)
+
+   char ftype[ ARYK__SZFTP + 1 ];
+   cnfImpn( FTYPE, FTYPE_length, ARYK__SZFTP, ftype );
+   int i;
+   Ary *ary;
+   AryPlace *place = aryI2P(*PLACE);
+
+   hdsdim lbnd[ARYK__MXDIM];
+   hdsdim ubnd[ARYK__MXDIM];
+   int ndim = ( *NDIM < ARYK__MXDIM ) ? *NDIM : ARYK__MXDIM;
+   for( i = 0; i < ndim; i++ ) {
+      lbnd[ i ] = LBND[ i ];
+      ubnd[ i ] = UBND[ i ];
+   }
+
+   arykNew( ftype, *NDIM, lbnd, ubnd, &place, &ary, STATUS );
+
+   *PLACE = aryP2I(place);
+   *IARY = aryA2I(ary);
+}
+
+F77_SUBROUTINE(aryk_newp)( CHARACTER(FTYPE),
+                          INTEGER(NDIM),
+                          INTEGER8_ARRAY(UBND),
+                          INTEGER(PLACE),
+                          INTEGER(IARY),
+                          INTEGER(STATUS)
+                          TRAIL(FTYPE) ) {
+   GENPTR_CHARACTER(FTYPE)
+   GENPTR_INTEGER(NDIM)
+   GENPTR_INTEGER8_ARRAY(UBND)
+   GENPTR_INTEGER(PLACE)
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(STATUS)
+
+   char ftype[ ARYK__SZFTP + 1 ];
+   cnfImpn( FTYPE, FTYPE_length, ARYK__SZFTP, ftype );
+   Ary *ary;
+   int i;
+   AryPlace *place = aryI2P(*PLACE);
+
+   hdsdim ubnd[ARYK__MXDIM];
+   int ndim = ( *NDIM < ARYK__MXDIM ) ? *NDIM : ARYK__MXDIM;
+   for( i = 0; i < ndim; i++ ) ubnd[ i ] = UBND[ i ];
+
+   arykNewp( ftype, *NDIM, ubnd, &place, &ary, STATUS );
+
+   *PLACE = aryP2I(place);
+   *IARY = aryA2I(ary);
+}
+
+F77_SUBROUTINE(aryk_noacc)( CHARACTER(ACCESS),
+                           INTEGER(IARY),
+                           INTEGER(STATUS)
+                           TRAIL(ACCESS) ) {
+   GENPTR_CHARACTER(ACCESS)
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(STATUS)
+
+   char access[ ARYK__SZACC + 1 ];
+   cnfImpn( ACCESS, ACCESS_length, ARYK__SZACC, access );
+
+   arykNoacc( access, aryI2A(*IARY), STATUS );
+}
+
+F77_SUBROUTINE(aryk_offs)( INTEGER(IARY1),
+                          INTEGER(IARY2),
+                          INTEGER(MXOFFS),
+                          INTEGER8_ARRAY(OFFS),
+                          INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY1)
+   GENPTR_INTEGER(IARY2)
+   GENPTR_INTEGER(MXOFFS)
+   GENPTR_INTEGER8_ARRAY(OFFS)
+   GENPTR_INTEGER(STATUS)
+
+   int i, mxoffs;
+   hdsdim offs[ ARYK__MXDIM ];
+
+   arykOffs( aryI2A(*IARY1), aryI2A2(*IARY2), ARYK__MXDIM, offs, STATUS );
+
+   mxoffs = ( *MXOFFS < ARYK__MXDIM ) ? *MXOFFS : ARYK__MXDIM;
+   for( i = 0; i < mxoffs; i++ ) OFFS[ i ] = offs[ i ];
+   for( ; i < *MXOFFS; i++ ) OFFS[ i ] = 1;
+}
+
+F77_SUBROUTINE(aryk_place)( CHARACTER(LOC),
+                           CHARACTER(NAME),
+                           INTEGER(IPLACE),
+                           INTEGER(STATUS)
+                           TRAIL(LOC)
+                           TRAIL(NAME) ) {
+   GENPTR_CHARACTER(LOC)
+   GENPTR_CHARACTER(NAME)
+   GENPTR_INTEGER(IPLACE)
+   GENPTR_INTEGER(STATUS)
+
+   AryPlace *place;
+   char name[DAT__SZNAM+1];
+   HDSLoc *loc = NULL;
+
+   datImportFloc( LOC, LOC_length, &loc, STATUS );
+   cnfImpn( NAME, NAME_length, DAT__SZNAM, name );
+
+   arykPlace( loc, name, &place, STATUS );
+
+   *IPLACE = aryP2I(place);
+}
+
+F77_SUBROUTINE(aryk_reset)( INTEGER(IARY),
+                           INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(STATUS)
+
+   arykReset( aryI2A(*IARY), STATUS );
+
+}
+
+F77_SUBROUTINE(aryk_sbad)( LOGICAL(BAD),
+                          INTEGER(IARY),
+                          INTEGER(STATUS) ) {
+   GENPTR_LOGICAL(BAD)
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(STATUS)
+
+   arykSbad( (*BAD == F77_TRUE), aryI2A(*IARY), STATUS );
+}
+
+
+F77_SUBROUTINE(aryk_sbnd)( INTEGER(NDIM),
+                          INTEGER8_ARRAY(LBND),
+                          INTEGER8_ARRAY(UBND),
+                          INTEGER(IARY),
+                          INTEGER(STATUS) ) {
+   GENPTR_INTEGER(NDIM)
+   GENPTR_INTEGER8_ARRAY(LBND)
+   GENPTR_INTEGER8_ARRAY(UBND)
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(STATUS)
+
+   int i, ndim;
+   hdsdim lbnd[ARYK__MXDIM];
+   hdsdim ubnd[ARYK__MXDIM];
+
+   ndim = ( *NDIM < ARYK__MXDIM ) ? *NDIM : ARYK__MXDIM;
+   for( i = 0; i < ndim; i++ ) {
+      lbnd[ i ] = LBND[ i ];
+      ubnd[ i ] = UBND[ i ];
+   }
+
+   arykSbnd( ndim, lbnd, ubnd, aryI2A(*IARY), STATUS );
+}
+
+F77_SUBROUTINE(aryk_sctyp)( INTEGER(IARY),
+                           CHARACTER(TYPE),
+                           INTEGER(STATUS)
+                           TRAIL(TYPE) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_CHARACTER(TYPE)
+   GENPTR_INTEGER(STATUS)
+   char type[ARYK__SZTYP+1];
+
+   arykSctyp( aryI2A(*IARY), type, STATUS );
+   cnfExprt( type, TYPE, TYPE_length );
+
+}
+
+F77_SUBROUTINE(aryk_sect)( INTEGER(IARY1),
+                          INTEGER(NDIM),
+                          INTEGER8_ARRAY(LBND),
+                          INTEGER8_ARRAY(UBND),
+                          INTEGER(IARY2),
+                          INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY1)
+   GENPTR_INTEGER(NDIM)
+   GENPTR_INTEGER8_ARRAY(LBND)
+   GENPTR_INTEGER8_ARRAY(UBND)
+   GENPTR_INTEGER(IARY2)
+   GENPTR_INTEGER(STATUS)
+
+   Ary *ary2;
+   int i, ndim;
+   hdsdim lbnd[ARYK__MXDIM];
+   hdsdim ubnd[ARYK__MXDIM];
+
+   ndim = ( *NDIM < ARYK__MXDIM ) ? *NDIM : ARYK__MXDIM;
+   for( i = 0; i < ndim; i++ ) {
+      lbnd[ i ] = LBND[ i ];
+      ubnd[ i ] = UBND[ i ];
+   }
+
+   arykSect( aryI2A(*IARY1), ndim, lbnd, ubnd, &ary2, STATUS );
+
+   *IARY2 = aryA2I(ary2);
+
+}
+
+F77_SUBROUTINE(aryk_shift)( INTEGER(NSHIFT),
+                           INTEGER8_ARRAY(SHIFT),
+                           INTEGER(IARY),
+                           INTEGER(STATUS) ) {
+   GENPTR_INTEGER(NSHIFT)
+   GENPTR_INTEGER8_ARRAY(SHIFT)
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(STATUS)
+
+   int i, nshift;
+   hdsdim shift[ARYK__MXDIM];
+   nshift = ( *NSHIFT < ARYK__MXDIM ) ? *NSHIFT : ARYK__MXDIM;
+   for( i = 0; i < nshift; i++ ) shift[ i ] = SHIFT[ i ];
+
+   arykShift( nshift, shift, aryI2A(*IARY), STATUS );
+
+}
+
+F77_SUBROUTINE(aryk_size)( INTEGER(IARY),
+                          INTEGER8(NPIX),
+                          INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER8(NPIX)
+   GENPTR_INTEGER(STATUS)
+   size_t npix;
+
+   arykSize( aryI2A(*IARY), &npix, STATUS );
+
+   *NPIX = npix;
+}
+
+F77_SUBROUTINE(aryk_ssect)( INTEGER(IARY1),
+                           INTEGER(IARY2),
+                           INTEGER(IARY3),
+                           INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY1)
+   GENPTR_INTEGER(IARY2)
+   GENPTR_INTEGER(IARY3)
+   GENPTR_INTEGER(STATUS)
+   Ary *ary3;
+
+   arykSsect( aryI2A(*IARY1), aryI2A2(*IARY2), &ary3, STATUS );
+
+   *IARY3 = aryA2I(ary3);
+}
+
+F77_SUBROUTINE(aryk_state)( INTEGER(IARY),
+                           LOGICAL(STATE),
+                           INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_LOGICAL(STATE)
+   GENPTR_INTEGER(STATUS)
+   int state;
+
+   arykState( aryI2A(*IARY), &state, STATUS );
+   *STATE = state ? F77_TRUE : F77_FALSE;
+}
+
+F77_SUBROUTINE(aryk_stype)( CHARACTER(FTYPE),
+                           INTEGER(IARY),
+                           INTEGER(STATUS)
+                           TRAIL(FTYPE) ) {
+   GENPTR_CHARACTER(FTYPE)
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(STATUS)
+   char ftype[ ARYK__SZFTP + 1 ];
+   cnfImpn( FTYPE, FTYPE_length, ARYK__SZFTP, ftype );
+
+   arykStype( ftype, aryI2A(*IARY), STATUS );
+
+}
+
+F77_SUBROUTINE(aryk_temp)( INTEGER(IPLACE),
+                          INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IPLACE)
+   GENPTR_INTEGER(STATUS)
+   AryPlace *place;
+
+   arykTemp( &place, STATUS );
+
+   *IPLACE = aryP2I(place);
+}
+
+F77_SUBROUTINE(aryk_type)( INTEGER(IARY),
+                          CHARACTER(TYPE),
+                          INTEGER(STATUS)
+                          TRAIL(TYPE) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_CHARACTER(TYPE)
+   GENPTR_INTEGER(STATUS)
+   char type[ARYK__SZTYP+1];
+
+   arykType( aryI2A(*IARY), type, STATUS );
+
+   cnfExprt( type, TYPE, TYPE_length );
+}
+
+F77_SUBROUTINE(aryk_unmap)( INTEGER(IARY),
+                           INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(STATUS)
+
+   arykUnmap( aryI2A(*IARY), STATUS );
+
+}
+
+F77_SUBROUTINE(aryk_valid)( INTEGER(IARY),
+                           LOGICAL(VALID),
+                           INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_LOGICAL(VALID)
+   GENPTR_INTEGER(STATUS)
+
+   *VALID = arykValid( aryI2A(*IARY), STATUS ) ? F77_TRUE : F77_FALSE;
+}
+
+F77_SUBROUTINE(aryk_verfy)( INTEGER(IARY),
+                           INTEGER(STATUS) ) {
+   GENPTR_INTEGER(IARY)
+   GENPTR_INTEGER(STATUS)
+
+   arykVerfy( aryI2A(*IARY), STATUS );
+
+}
+
+
+#define MAKE_GTSZ(CT,FT,FTYPE) \
+F77_SUBROUTINE(aryk_gtsz##FT)( INTEGER(IARY), \
+                              FTYPE(SCALE), \
+                              FTYPE(ZERO), \
+                              INTEGER(STATUS) ) { \
+   GENPTR_INTEGER(IARY) \
+   GENPTR_##FTYPE(SCALE) \
+   GENPTR_##FTYPE(ZERO) \
+   GENPTR_INTEGER(STATUS) \
+\
+   arykGtsz##CT( aryI2A(*IARY), SCALE, ZERO, STATUS ); \
+}
+
+MAKE_GTSZ(B, b, BYTE)
+MAKE_GTSZ(D, d, DOUBLE)
+MAKE_GTSZ(F, r, REAL)
+MAKE_GTSZ(I, i, INTEGER)
+MAKE_GTSZ(K, k, INTEGER8)
+MAKE_GTSZ(UB, ub, UBYTE)
+MAKE_GTSZ(UW, uw, UWORD)
+MAKE_GTSZ(W, w, WORD)
+
+#undef MAKE_GTSZ
+
+
+#define MAKE_PTSZ(CT,FT,FTYPE) \
+F77_SUBROUTINE(aryk_ptsz##FT)( INTEGER(IARY), \
+                              FTYPE(SCALE), \
+                              FTYPE(ZERO), \
+                              INTEGER(STATUS) ) { \
+   GENPTR_INTEGER(IARY) \
+   GENPTR_##FTYPE(SCALE) \
+   GENPTR_##FTYPE(ZERO) \
+   GENPTR_INTEGER(STATUS) \
+\
+   arykPtsz##CT( aryI2A(*IARY), *SCALE, *ZERO, STATUS ); \
+}
+
+MAKE_PTSZ(B, b, BYTE)
+MAKE_PTSZ(D, d, DOUBLE)
+MAKE_PTSZ(F, r, REAL)
+MAKE_PTSZ(I, i, INTEGER)
+MAKE_PTSZ(K, k, INTEGER8)
+MAKE_PTSZ(UB, ub, UBYTE)
+MAKE_PTSZ(UW, uw, UWORD)
+MAKE_PTSZ(W, w, WORD)
+
+#undef MAKE_PTSZ
+
+
