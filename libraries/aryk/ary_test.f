@@ -1,10 +1,10 @@
-      PROGRAM ARYK_TEST
+      PROGRAM ARY_TEST
 *+
 *  Name:
-*     ARYK_TEST
+*     ARY_TEST
 
 *  Purpose:
-*     Test installation of 64 bit ARYK.
+*     Test installation of 32 bit interface for ARYK.
 
 *  Language:
 *     Starlink Fortran 77
@@ -36,13 +36,8 @@
 *     {enter_new_authors_here}
 
 *  History:
-*     16-JAN-1992 (RFWS):
-*        Original version, derived from the equivalent HDS routine.
-*     15-NOV-2017 (DSB):
-*        - Lifted to tested the F77 interface to the C version of ARYK.
-*        - INTEGERs that holds bound, dimensions etc, changed to INTEGER*8.
-*        - Added a call to EXIT(1) if an error occurs, so that the "make
-*          check" command reports an error.
+*     1-DEC-2017 (DSB):
+*        Original version, derived from the equivalent 64 bit tester.
 *     {enter_changes_here}
 
 *  Bugs:
@@ -57,8 +52,8 @@
       INCLUDE 'SAE_PAR'          ! Standard SAE constants
       INCLUDE 'CNF_PAR'          ! For CNV_PVAL function
       INCLUDE 'DAT_PAR'          ! DAT_ public constants
-      INCLUDE 'ARYK_PAR'         ! ARYK_ public constants
-      INCLUDE 'ARYK_ERR'         ! ARYK_ error codes
+      INCLUDE 'ARY_PAR'          ! ARY_ public constants
+      INCLUDE 'ARY_ERR'          ! ARY_ error codes
 
 *  Status:
       INTEGER STATUS             ! Global status
@@ -67,15 +62,15 @@
       CHARACTER FORM*30          ! Array form
       CHARACTER LOC*( DAT__SZLOC ) ! Top-level HDS locator
       CHARACTER TYPE*30          ! Array type
-      INTEGER*8 DIM( 2 )         ! Array dimensions
-      INTEGER*8 EL               ! Number of mapped elements
+      INTEGER DIM( 2 )           ! Array dimensions
+      INTEGER EL                 ! Number of mapped elements
       INTEGER IARY               ! Array identifier
       INTEGER IARY2              ! Second array identifier
       INTEGER ISUM               ! Sum of array elements
-      INTEGER*8 LBND( 2 )        ! Scaled array bounds
+      INTEGER LBND( 2 )          ! Scaled array bounds
       INTEGER PLACE              ! Array placeholder
       INTEGER PNTR               ! Pointer to mapped array
-      INTEGER*8 UBND( 2 )        ! Scaled array bounds
+      INTEGER UBND( 2 )          ! Scaled array bounds
       INTEGER ZAXIS              ! Index of compression axis
       LOGICAL OK                 ! Was error correctly reported?
       REAL SCALE                 ! Scale factor
@@ -94,35 +89,35 @@
       CALL ERR_MARK()
 
 *  Create a new container file.
-      CALL HDS_NEW( 'ary_test', 'ARYK_TEST', 'NDF', 0, DIM, LOC,
+      CALL HDS_NEW( 'ary_test', 'ARY_TEST', 'NDF', 0, DIM, LOC,
      :              STATUS )
 
 *  Create an array inside it.
-      CALL ARYK_PLACE( LOC, 'ARRAY', PLACE, STATUS )
-      CALL ARYK_NEWP( '_INTEGER', 2, DIM, PLACE, IARY, STATUS )
+      CALL ARY_PLACE( LOC, 'ARRAY', PLACE, STATUS )
+      CALL ARY_NEWP( '_INTEGER', 2, DIM, PLACE, IARY, STATUS )
 
 *  Map the array.
-      CALL ARYK_MAP( IARY, '_REAL', 'WRITE', PNTR, EL, STATUS )
+      CALL ARY_MAP( IARY, '_REAL', 'WRITE', PNTR, EL, STATUS )
 
 *  Initialise the array.
       CALL SETUP( EL, %VAL( CNF_PVAL( PNTR ) ), STATUS )
 
 *  Clean up and close the file.
-      CALL ARYK_ANNUL( IARY, STATUS )
+      CALL ARY_ANNUL( IARY, STATUS )
       CALL HDS_CLOSE( LOC, STATUS )
 
 *  Re-open the file.
       CALL HDS_OPEN( 'ary_test', 'UPDATE', LOC, STATUS )
 
 *  Find and map the array.
-      CALL ARYK_FIND( LOC, 'ARRAY', IARY, STATUS )
-      CALL ARYK_MAP( IARY, '_INTEGER', 'READ', PNTR, EL, STATUS )
+      CALL ARY_FIND( LOC, 'ARRAY', IARY, STATUS )
+      CALL ARY_MAP( IARY, '_INTEGER', 'READ', PNTR, EL, STATUS )
 
 *  Sum the data elements.
       CALL SUM( EL, %VAL( CNF_PVAL( PNTR ) ), ISUM, STATUS )
 
 *  Clean up and erase the container file.
-      CALL ARYK_ANNUL( IARY, STATUS )
+      CALL ARY_ANNUL( IARY, STATUS )
       CALL HDS_ERASE( LOC, STATUS )
 
 *  Check if the test ran OK. If not, report an error.
@@ -140,21 +135,21 @@
 *  Create an HDS file and create a new _WORD 2D simple array in it. Fill the
 *  array with integers equal to the element index.
       CALL HDS_NEW( 'ary_test2', 'TEST', 'TEST', 0, 0, LOC, STATUS )
-      CALL ARYK_PLACE( LOC, 'TEST', PLACE, STATUS )
+      CALL ARY_PLACE( LOC, 'TEST', PLACE, STATUS )
 
       LBND( 1 ) = -100
       LBND( 2 ) = -200
       UBND( 1 ) = 100
       UBND( 2 ) = 0
-      CALL ARYK_NEW( '_WORD', 2, LBND, UBND, PLACE, IARY, STATUS )
-      CALL ARYK_MAP( IARY, '_INTEGER', 'WRITE', PNTR, EL, STATUS )
+      CALL ARY_NEW( '_WORD', 2, LBND, UBND, PLACE, IARY, STATUS )
+      CALL ARY_MAP( IARY, '_INTEGER', 'WRITE', PNTR, EL, STATUS )
       CALL FILL( EL, %VAL( CNF_PVAL( PNTR ) ), STATUS )
-      CALL ARYK_UNMAP( IARY, STATUS )
+      CALL ARY_UNMAP( IARY, STATUS )
 
 *  Set scale and zero terms for this simple array, and then check that
 *  the storage form is now SCALED.
-      CALL ARYK_PTSZR( IARY, 2.0, -1.2, STATUS )
-      CALL ARYK_FORM( IARY, FORM, STATUS )
+      CALL ARY_PTSZR( IARY, 2.0, -1.2, STATUS )
+      CALL ARY_FORM( IARY, FORM, STATUS )
 
       IF( FORM .NE. 'SCALED' .AND. STATUS .EQ. SAI__OK ) THEN
          STATUS = SAI__ERROR
@@ -163,7 +158,7 @@
      :                  STATUS )
       END IF
 
-      CALL ARYK_GTSZR( IARY, SCALE, ZERO, STATUS )
+      CALL ARY_GTSZR( IARY, SCALE, ZERO, STATUS )
 
       IF( SCALE .NE. 2.0 .AND. STATUS .EQ. SAI__OK ) THEN
          STATUS = SAI__ERROR
@@ -179,7 +174,7 @@
      :                 'array', STATUS )
       END IF
 
-      CALL ARYK_SCTYP( IARY, TYPE, STATUS )
+      CALL ARY_SCTYP( IARY, TYPE, STATUS )
 
       IF( TYPE .NE. '_WORD' .AND. STATUS .EQ. SAI__OK ) THEN
          STATUS = SAI__ERROR
@@ -188,7 +183,7 @@
      :                 'scaled array', STATUS )
       END IF
 
-      CALL ARYK_TYPE( IARY, TYPE, STATUS )
+      CALL ARY_TYPE( IARY, TYPE, STATUS )
 
       IF( TYPE .NE. '_REAL' .AND. STATUS .EQ. SAI__OK ) THEN
          STATUS = SAI__ERROR
@@ -200,7 +195,7 @@
 
 *  Check the data type is _REAL (because the scale and zero were set as
 *  reals).
-      CALL ARYK_TYPE( IARY, TYPE, STATUS )
+      CALL ARY_TYPE( IARY, TYPE, STATUS )
       IF( TYPE .NE. '_REAL' .AND. STATUS .EQ. SAI__OK ) THEN
          STATUS = SAI__ERROR
          CALL MSG_SETC( 'T', TYPE )
@@ -210,19 +205,19 @@
 
 *  Map the array and check that the mapped values include the effect of
 *  the above scaling.
-      CALL ARYK_MAP( IARY, '_REAL', 'READ', PNTR, EL, STATUS )
+      CALL ARY_MAP( IARY, '_REAL', 'READ', PNTR, EL, STATUS )
       CALL BACKR( EL, %VAL( CNF_PVAL( PNTR ) ), STATUS )
-      CALL ARYK_UNMAP( IARY, STATUS )
+      CALL ARY_UNMAP( IARY, STATUS )
 
 *  Close the HDS file and then re-open it.
-      CALL ARYK_ANNUL( IARY, STATUS )
+      CALL ARY_ANNUL( IARY, STATUS )
       CALL DAT_ANNUL( LOC, STATUS )
       CALL HDS_OPEN( 'ary_test2', 'WRITE', LOC, STATUS )
 
 *  Import the array and check that it has SCALED storage form, and check
 *  the mapped array values are correct.
-      CALL ARYK_FIND( LOC, 'TEST', IARY, STATUS )
-      CALL ARYK_FORM( IARY, FORM, STATUS )
+      CALL ARY_FIND( LOC, 'TEST', IARY, STATUS )
+      CALL ARY_FORM( IARY, FORM, STATUS )
       IF( FORM .NE. 'SCALED' .AND. STATUS .EQ. SAI__OK ) THEN
          STATUS = SAI__ERROR
          CALL MSG_SETC( 'F', FORM )
@@ -230,17 +225,17 @@
      :                  STATUS )
       END IF
 
-      CALL ARYK_MAP( IARY, '_REAL', 'READ', PNTR, EL, STATUS )
+      CALL ARY_MAP( IARY, '_REAL', 'READ', PNTR, EL, STATUS )
       CALL BACKR( EL, %VAL( CNF_PVAL( PNTR ) ), STATUS )
-      CALL ARYK_UNMAP( IARY, STATUS )
+      CALL ARY_UNMAP( IARY, STATUS )
 
 *  Check an "Access denied" error is reported if we try to map a scaled
 *  array for update or write access.
       IF( STATUS .EQ. SAI__OK ) THEN
          CALL ERR_MARK
          OK = .TRUE.
-         CALL ARYK_MAP( IARY, '_REAL', 'UPDATE', PNTR, EL, STATUS )
-         IF( STATUS .NE. ARYK__CMPAC ) THEN
+         CALL ARY_MAP( IARY, '_REAL', 'UPDATE', PNTR, EL, STATUS )
+         IF( STATUS .NE. ARY__CMPAC ) THEN
             OK = .FALSE.
          ELSE
             CALL ERR_ANNUL( STATUS )
@@ -256,16 +251,16 @@
       END IF
 
 *  Copy the scaled array to a new temporary array.
-      CALL ARYK_TEMP( PLACE, STATUS )
-      CALL ARYK_COPY( IARY, PLACE, IARY2, STATUS )
+      CALL ARY_TEMP( PLACE, STATUS )
+      CALL ARY_COPY( IARY, PLACE, IARY2, STATUS )
 
 *  Check the values in the copied array are correct.
-      CALL ARYK_MAP( IARY2, '_REAL', 'READ', PNTR, EL, STATUS )
+      CALL ARY_MAP( IARY2, '_REAL', 'READ', PNTR, EL, STATUS )
       CALL BACKR( EL, %VAL( CNF_PVAL( PNTR ) ), STATUS )
-      CALL ARYK_UNMAP( IARY2, STATUS )
+      CALL ARY_UNMAP( IARY2, STATUS )
 
 *  Check the storage form of the copy.
-      CALL ARYK_FORM( IARY2, FORM, STATUS )
+      CALL ARY_FORM( IARY2, FORM, STATUS )
       IF( FORM .NE. 'SIMPLE' .AND. STATUS .EQ. SAI__OK ) THEN
          STATUS = SAI__ERROR
          CALL MSG_SETC( 'F', FORM )
@@ -274,7 +269,7 @@
       END IF
 
 *  Delete the HDS file.
-      CALL ARYK_ANNUL( IARY, STATUS )
+      CALL ARY_ANNUL( IARY, STATUS )
       CALL HDS_ERASE( LOC, STATUS )
 
 
@@ -284,20 +279,20 @@
 
 *  Create _INTEGER 2D simple temporary array in it. Fill the array with
 *  integers equal to the element index.
-      CALL ARYK_TEMP( PLACE, STATUS )
+      CALL ARY_TEMP( PLACE, STATUS )
       LBND( 1 ) = -100
       LBND( 2 ) = -200
       UBND( 1 ) = 100
       UBND( 2 ) = 0
-      CALL ARYK_NEW( '_INTEGER', 2, LBND, UBND, PLACE, IARY2, STATUS )
-      CALL ARYK_MAP( IARY2, '_INTEGER', 'WRITE', PNTR, EL, STATUS )
+      CALL ARY_NEW( '_INTEGER', 2, LBND, UBND, PLACE, IARY2, STATUS )
+      CALL ARY_MAP( IARY2, '_INTEGER', 'WRITE', PNTR, EL, STATUS )
       CALL FILL( EL, %VAL( CNF_PVAL( PNTR ) ), STATUS )
-      CALL ARYK_UNMAP( IARY2, STATUS )
+      CALL ARY_UNMAP( IARY2, STATUS )
 
 *  Create a delta compressed copy of the array, stroring it in an HDS file.
       CALL HDS_NEW( 'ary_test3', 'TEST', 'TEST', 0, 0, LOC, STATUS )
-      CALL ARYK_PLACE( LOC, 'TEST', PLACE, STATUS )
-      CALL ARYK_DELTA( IARY2, 0, ' ', 0.0, PLACE, ZRAT, IARY, STATUS )
+      CALL ARY_PLACE( LOC, 'TEST', PLACE, STATUS )
+      CALL ARY_DELTA( IARY2, 0, ' ', 0.0, PLACE, ZRAT, IARY, STATUS )
       IF( ABS( ZRAT - 3.827846 ) .GT. 1.0E-4 .AND.
      :    STATUS .EQ. SAI__OK ) THEN
          STATUS = SAI__ERROR
@@ -307,10 +302,10 @@
       END IF
 
 *  Delete the temporary delta compressed array
-      call ARYK_ANNUL( IARY2, STATUS )
+      call ARY_ANNUL( IARY2, STATUS )
 
 *  Check the storage form is DELTA
-      CALL ARYK_FORM( IARY, FORM, STATUS )
+      CALL ARY_FORM( IARY, FORM, STATUS )
       IF( FORM .NE. 'DELTA' .AND. STATUS .EQ. SAI__OK ) THEN
          STATUS = SAI__ERROR
          CALL MSG_SETC( 'F', FORM )
@@ -319,7 +314,7 @@
       END IF
 
 *  Check the compression axis and compressed data type
-      CALL ARYK_GTDLT( IARY, ZAXIS, TYPE, ZRAT, STATUS )
+      CALL ARY_GTDLT( IARY, ZAXIS, TYPE, ZRAT, STATUS )
 
       IF( ABS( ZRAT - 3.827846 ) .GT. 1.0E-4 .AND.
      :    STATUS .EQ. SAI__OK ) THEN
@@ -345,7 +340,7 @@
       END IF
 
 *  Check the uncompressed array data type
-      CALL ARYK_TYPE( IARY, TYPE, STATUS )
+      CALL ARY_TYPE( IARY, TYPE, STATUS )
       IF( TYPE .NE. '_INTEGER' .AND. STATUS .EQ. SAI__OK ) THEN
          STATUS = SAI__ERROR
          CALL MSG_SETC( 'T', TYPE )
@@ -355,23 +350,23 @@
 
 *  Map the array and check that the mapped values are uncompressed. Do it
 *  first as INTEGER then as REAL.
-      CALL ARYK_MAP( IARY, '_INTEGER', 'READ', PNTR, EL, STATUS )
+      CALL ARY_MAP( IARY, '_INTEGER', 'READ', PNTR, EL, STATUS )
       CALL UNCOMPI( EL, %VAL( CNF_PVAL( PNTR ) ), STATUS )
-      CALL ARYK_UNMAP( IARY, STATUS )
+      CALL ARY_UNMAP( IARY, STATUS )
 
-      CALL ARYK_MAP( IARY, '_REAL', 'READ', PNTR, EL, STATUS )
+      CALL ARY_MAP( IARY, '_REAL', 'READ', PNTR, EL, STATUS )
       CALL UNCOMPR( EL, %VAL( CNF_PVAL( PNTR ) ), STATUS )
-      CALL ARYK_UNMAP( IARY, STATUS )
+      CALL ARY_UNMAP( IARY, STATUS )
 
 *  Close the HDS file and then re-open it.
-      CALL ARYK_ANNUL( IARY, STATUS )
+      CALL ARY_ANNUL( IARY, STATUS )
       CALL DAT_ANNUL( LOC, STATUS )
       CALL HDS_OPEN( 'ary_test3', 'WRITE', LOC, STATUS )
 
 *  Import the array and check that it has DELTA storage form, and check
 *  the mapped array values are correct.
-      CALL ARYK_FIND( LOC, 'TEST', IARY, STATUS )
-      CALL ARYK_FORM( IARY, FORM, STATUS )
+      CALL ARY_FIND( LOC, 'TEST', IARY, STATUS )
+      CALL ARY_FORM( IARY, FORM, STATUS )
       IF( FORM .NE. 'DELTA' .AND. STATUS .EQ. SAI__OK ) THEN
          STATUS = SAI__ERROR
          CALL MSG_SETC( 'F', FORM )
@@ -379,17 +374,17 @@
      :                  STATUS )
       END IF
 
-      CALL ARYK_MAP( IARY, '_REAL', 'READ', PNTR, EL, STATUS )
+      CALL ARY_MAP( IARY, '_REAL', 'READ', PNTR, EL, STATUS )
       CALL UNCOMPR( EL, %VAL( CNF_PVAL( PNTR ) ), STATUS )
-      CALL ARYK_UNMAP( IARY, STATUS )
+      CALL ARY_UNMAP( IARY, STATUS )
 
 *  Check an "Access denied" error is reported if we try to map a delta
 *  array for update or write access.
       IF( STATUS .EQ. SAI__OK ) THEN
          CALL ERR_MARK
          OK = .TRUE.
-         CALL ARYK_MAP( IARY, '_REAL', 'UPDATE', PNTR, EL, STATUS )
-         IF( STATUS .NE. ARYK__CMPAC ) THEN
+         CALL ARY_MAP( IARY, '_REAL', 'UPDATE', PNTR, EL, STATUS )
+         IF( STATUS .NE. ARY__CMPAC ) THEN
             OK = .FALSE.
          ELSE
             CALL ERR_ANNUL( STATUS )
@@ -405,16 +400,16 @@
       END IF
 
 *  Copy the delta array to a new temporary array.
-      CALL ARYK_TEMP( PLACE, STATUS )
-      CALL ARYK_COPY( IARY, PLACE, IARY2, STATUS )
+      CALL ARY_TEMP( PLACE, STATUS )
+      CALL ARY_COPY( IARY, PLACE, IARY2, STATUS )
 
 *  Check the values in the copied array are correct.
-      CALL ARYK_MAP( IARY2, '_REAL', 'READ', PNTR, EL, STATUS )
+      CALL ARY_MAP( IARY2, '_REAL', 'READ', PNTR, EL, STATUS )
       CALL UNCOMPR( EL, %VAL( CNF_PVAL( PNTR ) ), STATUS )
-      CALL ARYK_UNMAP( IARY2, STATUS )
+      CALL ARY_UNMAP( IARY2, STATUS )
 
 *  Check the storage form of the copy.
-      CALL ARYK_FORM( IARY2, FORM, STATUS )
+      CALL ARY_FORM( IARY2, FORM, STATUS )
       IF( FORM .NE. 'SIMPLE' .AND. STATUS .EQ. SAI__OK ) THEN
          STATUS = SAI__ERROR
          CALL MSG_SETC( 'F', FORM )
@@ -423,13 +418,13 @@
       END IF
 
 *  Delete the HDS file.
-      CALL ARYK_ANNUL( IARY, STATUS )
+      CALL ARY_ANNUL( IARY, STATUS )
       CALL HDS_ERASE( LOC, STATUS )
 
 *  Report a context error.
       IF( STATUS .NE. SAI__OK ) THEN
-         CALL ERR_REP( 'ARYK_TEST_ERR', 'ARYK_TEST: ARYK installation'//
-     :                 ' test (64 bit) failed.', STATUS )
+         CALL ERR_REP( 'ARY_TEST_ERR', 'ARY_TEST: ARYK installation'//
+     :                 ' test (32 bit) failed.', STATUS )
       END IF
 
 *  Display any deferred error messages.
@@ -491,7 +486,7 @@
       INCLUDE 'SAE_PAR'          ! Standard SAE constants
 
 *  Arguments Given:
-      INTEGER*8 EL
+      INTEGER EL
 
 *  Arguments Returned:
       REAL ARRAY( * )
@@ -500,7 +495,7 @@
       INTEGER STATUS             ! Global status
 
 *  Local Variables:
-      INTEGER*8 I                ! Loop counter
+      INTEGER I                ! Loop counter
 
 *.
 
@@ -562,7 +557,7 @@
       INCLUDE 'SAE_PAR'          ! Standard SAE constants
 
 *  Arguments Given:
-      INTEGER*8 EL
+      INTEGER EL
       INTEGER ARRAY( * )
 
 *  Arguments Returned:
@@ -572,7 +567,7 @@
       INTEGER STATUS             ! Global status
 
 *  Local Variables:
-      INTEGER*8 I                ! Loop counter
+      INTEGER I                ! Loop counter
 
 *.
 
@@ -596,7 +591,7 @@
       SUBROUTINE FILL( EL, ARRAY, STATUS )
       IMPLICIT NONE
       INCLUDE 'SAE_PAR'
-      INTEGER*8 I, EL
+      INTEGER I, EL
       INTEGER STATUS
       INTEGER ARRAY( EL )
 
@@ -614,7 +609,7 @@
       SUBROUTINE BACKR( EL, ARRAY, STATUS )
       IMPLICIT NONE
       INCLUDE 'SAE_PAR'
-      INTEGER*8 I, EL
+      INTEGER I, EL
       INTEGER STATUS
       REAL ARRAY( EL ), VAL
 
@@ -627,7 +622,7 @@
             CALL MSG_SETR( 'B', ARRAY( I ) )
             CALL MSG_SETR( 'SB', 2.0*I - 1.2 )
             CALL MSG_SETI( 'I', I )
-            CALL ERR_REP( 'ARYK_TEST_E10', 'Bad value (^B) at element'//
+            CALL ERR_REP( 'ARY_TEST_E10', 'Bad value (^B) at element'//
      :                    ' ^I. Should be ^SB.', STATUS )
             RETURN
          END IF
@@ -643,7 +638,7 @@
       IMPLICIT NONE
       INCLUDE 'SAE_PAR'
       INTEGER STATUS
-      INTEGER*8 I, EL
+      INTEGER I, EL
       REAL ARRAY( EL )
 
       IF( STATUS .NE. SAI__OK ) RETURN
@@ -654,7 +649,7 @@
             CALL MSG_SETR( 'B', ARRAY( I ) )
             CALL MSG_SETR( 'SB', REAL( I ) )
             CALL MSG_SETI( 'I', I )
-            CALL ERR_REP( 'ARYK_TEST_E11', 'Bad value (^B) at element'//
+            CALL ERR_REP( 'ARY_TEST_E11', 'Bad value (^B) at element'//
      :                    ' ^I. Should be ^SB.', STATUS )
             RETURN
          END IF
@@ -667,7 +662,7 @@
       IMPLICIT NONE
       INCLUDE 'SAE_PAR'
       INTEGER STATUS
-      INTEGER*8 I, EL
+      INTEGER I, EL
       INTEGER ARRAY( EL )
 
       IF( STATUS .NE. SAI__OK ) RETURN
@@ -678,7 +673,7 @@
             CALL MSG_SETI( 'B', ARRAY( I ) )
             CALL MSG_SETI( 'SB', I )
             CALL MSG_SETI( 'I', I )
-            CALL ERR_REP( 'ARYK_TEST_E11', 'Bad value (^B) at element'//
+            CALL ERR_REP( 'ARY_TEST_E11', 'Bad value (^B) at element'//
      :                    ' ^I. Should be ^SB.', STATUS )
             RETURN
          END IF

@@ -24,7 +24,7 @@ stardocs_DATA = @STAR_LATEX_DOCUMENTATION@
 
 PRIVATE_INCLUDES = aryk1.h aryk1_cgen.h aryk1_types.h aryk_dlt.h
 
-PUBLIC_F_INCLUDES =
+PUBLIC_F_INCLUDES = ARY_PAR ARYK_PAR ARY_ERR
 PUBLIC_C_INCLUDES = aryk.h aryk_types.h
 PUBLIC_INCLUDES = $(PUBLIC_F_INCLUDES) $(PUBLIC_C_INCLUDES)
 include_MESSAGES = aryk_err.h ARYK_ERR
@@ -70,16 +70,24 @@ aryk1_cgen.h: aryk1_cgen.h.source make_h
 aryk_cgen.h: aryk_cgen.h.source make_h
 	./make_h
 
+ARY_PAR: ARYK_PAR
+	sed -e 's/ARYK/ARY/g' ARYK_PAR | sed -e 's/64 bit/32 bit/' > ARY_PAR
+
+ARY_ERR: ARYK_ERR
+	sed -e 's/ARYK/ARY/g' ARYK_ERR | sed -e 's/64 bit/32 bit/' > ARY_ERR
+
 # Testing
 
-TESTS = arykTest aryk_test
-check_PROGRAMS = arykTest aryk_test
+TESTS = arykTest aryk_test ary_test
+check_PROGRAMS = arykTest aryk_test ary_test
 arykTest_SOURCES = arykTest.c
 aryk_test_SOURCES = aryk_test.f
+ary_test_SOURCES = ary_test.f
 
 # LDADD is the expansion of aryk_link, with -laryk replaced by libaryk.la
 arykTest_LDADD = libaryk.la `ast_link` `hds_link` `err_link` `chr_link` `prm_link`
 aryk_test_LDADD = libaryk.la `ast_link` `hds_link` `err_link` `chr_link` `prm_link`
+ary_test_LDADD = libaryk.la `ast_link` `hds_link` `err_link` `chr_link` `prm_link`
 
 dist_starnews_DATA = aryk.news
 dist_pkgdata_DATA = LICENCE
